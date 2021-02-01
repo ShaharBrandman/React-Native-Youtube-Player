@@ -1,5 +1,5 @@
 /*
-cuntplayer-youtube/App.js
+cuntplayer/App.js
 
 Author: Shahar Brandman (2020)
 
