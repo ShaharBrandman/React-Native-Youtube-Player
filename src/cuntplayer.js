@@ -303,11 +303,45 @@ export function getQueue() {
  * @param {string} path
  * @returns {void}
  */
-//download(url, path) {
-//    if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
-//
-//    const video = ytdl(url, { filter: format => format.container === 'mp3' })
-//}
+export async function download(url) {
+    if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
+
+    ytdl.getInfo(url, { quality: 'highestaudio' }, (err, info) => {
+        if (err) { throw err }
+        const stream = ytdl.getBasicInfo(info, { quality: 'highestaudio' })
+
+        
+    })
+    //const video = await ytdl(url, {filter: format => format === 'mp3'})
+
+    /*await RNFetchBlob.config({
+        path: `${RNFetchBlob.fs.dirs.DocumentDir}/track.mp3`,
+        overwrite: false,
+        fileCache: true,
+    })
+    .fetch('GET', url).progress((r, s) => {
+        console.log(`${r} bytes out of ${s}`)
+    })*/
+
+    /*ytdl.getInfo(url, {}, (err) => {
+        const format = ytdl.chooseFormat('mp3');
+        console.log('1')
+          
+        RNFetchBlob
+          .config({
+              addAndroidDownloads: {
+                  useDownloadManager: true,
+                  mime: format.type
+              }
+          })
+          .fetch('GET', format.url)
+          .then((resp) => {
+            console.log('1')
+            resp.path()
+        })
+        .then(() => { return console.log(`${url} has been downloaded to ${path}`) })
+    })*/
+}
 
 /**
  * get the duration of the current track
