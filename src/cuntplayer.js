@@ -6,12 +6,19 @@ Author: Shahar Brandman (2021)
 The whole source code for the background youtube player
 */
 import React from 'react'
+import { Alert } from 'react-native'
 import TrackPlayer from 'react-native-track-player'
+
+import RNFetchBlob from 'rn-fetch-blob'
+import ytdl from 'react-native-ytdl'
+
+export const downloadPath = RNFetchBlob.fs.dirs.DownloadDir
+export const documentPath = RNFetchBlob.fs.dirs.DocumentDir
 
 /**
 * current track details
 */
-export const track = {
+export let track = {
     id: 'default',              //default id
     url: 'None',                //default url
     title: 'Default Song',      //default title
@@ -24,10 +31,10 @@ export const track = {
 * current queue details
 * @type {string[]}
 */
-export const queue = []
+export let queue = []
     
 //current cuntplayer state
-export const cuntplayerState = { //default state
+export let cuntplayerState = { //default state
     loop: false,
     queueLoop: false,
     eternalLoop: false
@@ -40,7 +47,7 @@ export function create() {
     React.useEffect(() => {
         TrackPlayer.setupPlayer().then(() => {
                 
-            //TrackPlayer.registerPlaybackService(() => require('./service'))
+            TrackPlayer.registerPlaybackService(() => require('./service'))
                 
             TrackPlayer.updateOptions({
                 capabilities: [
@@ -265,7 +272,7 @@ export function setSong(currentSong) {
 
 /**
  * return the current song that is playing or current playing song in the queue
- * @returns {string[]} currentSong 
+ * @returns {string[]} track
  */
 export function getSong() {
     return track
@@ -305,47 +312,20 @@ export function getQueue() {
  */
 export async function download(url) {
     if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
-
-    ytdl.getInfo(url, { quality: 'highestaudio' }, (err, info) => {
-        if (err) { throw err }
-        const stream = ytdl.getBasicInfo(info, { quality: 'highestaudio' })
-
-        
+    const video = await ytdl(url, { quality: 'highestaudio' })
+    
+    RNFetchBlob.config({
+        path: `${documentPath}/track.mp3`,
+        overwrite: true
+    }).fetch('GET', (video[0])['url']).progress((r, s) => {
+        console.log(`${r} out of ${s}`)
     })
-    //const video = await ytdl(url, {filter: format => format === 'mp3'})
-
-    /*await RNFetchBlob.config({
-        path: `${RNFetchBlob.fs.dirs.DocumentDir}/track.mp3`,
-        overwrite: false,
-        fileCache: true,
-    })
-    .fetch('GET', url).progress((r, s) => {
-        console.log(`${r} bytes out of ${s}`)
-    })*/
-
-    /*ytdl.getInfo(url, {}, (err) => {
-        const format = ytdl.chooseFormat('mp3');
-        console.log('1')
-          
-        RNFetchBlob
-          .config({
-              addAndroidDownloads: {
-                  useDownloadManager: true,
-                  mime: format.type
-              }
-          })
-          .fetch('GET', format.url)
-          .then((resp) => {
-            console.log('1')
-            resp.path()
-        })
-        .then(() => { return console.log(`${url} has been downloaded to ${path}`) })
-    })*/
+    
 }
 
 /**
  * get the duration of the current track
- * @returns {string}
+ * @returns {number}
  */
 export function getDuration() {
     return TrackPlayer.getDuration()
