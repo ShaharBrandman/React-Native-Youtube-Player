@@ -306,21 +306,38 @@ export function getQueue() {
 
 /**
  * Download a youtube video to the specifed path
- * @param {string} url 
- * @param {string} path
+ * @param {string} url
  * @returns {void}
  */
 export async function download(url) {
     if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
-    const video = await ytdl(url, { quality: 'highestaudio' })
-    
+    //const video = await ytdl(url, { quality: 'highestaudio' })
+    const video = await ytdl.getInfo(url, { quality: 'highestaudio' })
+
+    const thumbnailUrl = (((video['videoDetails'])['thumbnails'])[3])['url']
+    const videoId = ((video['formats'])[10])['url']
+
     RNFetchBlob.config({
         path: `${documentPath}/track.mp3`,
         overwrite: true
-    }).fetch('GET', (video[0])['url']).progress((r, s) => {
+    }).fetch('GET', videoId).progress((r, s) => {
         console.log(`${r} out of ${s}`)
+    }).then(() => {
+        console.log(`${url} has been downloaded!`)
+    }).catch(() => {
+        return console.error(`There was an error downloading ${url}`)
     })
-    
+
+    RNFetchBlob.config({
+        path: `${documentPath}/track.png`,
+        overwrite: true
+    }).fetch('GET', thumbnailUrl).progress((r, s) => {
+        console.log(`${r} out of ${s}`)
+    }).then(() => {
+        console.log(`the thumbnail has been downloaded!`)
+    }).catch(() => {
+        return console.error(`There was an error downloading ${thumbnailUrl}`)
+    })
 }
 
 /**
