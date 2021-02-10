@@ -64,6 +64,7 @@ export default function App() {
         onSlidingComplete = { (v) => {
           TrackPlayer.seekTo(v)
           TrackPlayer.play()
+          setSeeking(false)
         } }
       />
       </SafeAreaView>
