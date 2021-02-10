@@ -11,6 +11,7 @@ import TrackPlayer from 'react-native-track-player'
 
 import RNFetchBlob from 'rn-fetch-blob'
 import ytdl from 'react-native-ytdl'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export const downloadPath = RNFetchBlob.fs.dirs.DownloadDir
 export const documentPath = RNFetchBlob.fs.dirs.DocumentDir
@@ -247,15 +248,18 @@ export function isLoopingEternally() {
 /**
  * set a single track to be played in cuntplayer
  * @param {string[]} currentSong
+ * @param {boolean} print
  */
-export function setSong(currentSong) {
+export function setSong(currentSong, print = false) {
     track.id = currentSong.id
     track.url = currentSong.url
     track.title = currentSong.title
     track.artist = currentSong.artist
     track.album = currentSong.album
 
-    TrackPlayer.add(track.url).then(() => {
+    TrackPlayer.add(track.url)
+
+    if (print) {
         console.log('Track has been updated as a single song')
         console.log(`
         Track details: \n
@@ -267,7 +271,7 @@ export function setSong(currentSong) {
         ALBUM: ${track.album} \n
         ===========
         `)
-    })
+    }
 }
 
 /**
@@ -281,19 +285,23 @@ export function getSong() {
 /**
  * set a list of songs for the cuntplayer to play as a queue
  * @param {string[]} q
+ * @param {boolean} print
  */
-export function setQueue(q) {
+export function setQueue(q, print = false) {
     queue = q
 
-    TrackPlayer.add(q).then(() => {
-    console.log('Track has been updated as queue')
-    console.log(`
-        Tracks in Queue:    \n
-        ===========         \n
-        ${q}                \n
-         ===========
-        `)
-    })
+    TrackPlayer.add(q)
+
+    if (print) {
+        console.log('Track has been updated as queue')
+        console.log(`
+            Tracks in Queue:    \n
+            ===========         \n
+            ${q}                \n
+             ===========
+            `
+        )
+    }
 }
 
 /**
@@ -311,18 +319,23 @@ export function getQueue() {
  */
 export async function download(url) {
     if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
-    const video = await ytdl(url)
+    const video = await ytdl(url, { quality: 'highest' })
     const videoDetails = await ytdl.getInfo(url, { filter: format => format.container === 'audinoonly' })
 
     const thumbnailUrl = (((videoDetails['videoDetails'])['thumbnails'])[3])['url']
-    //const videoId = (((videoDetails['formats'])[0])['url'])
+    AsyncStorage.setItem('thumbnail', thumbnailUrl)
+
     const videoId = (video[0])['url']
+    //const videoId = (((videoDetails['formats'])[0])['url'])
 
     RNFetchBlob.config({
         path: `${documentPath}/track.mp3`,
         overwrite: true
     }).fetch('GET', videoId).progress((r, s) => {
-        console.log(`${r} out of ${s}`)
+        if (r == 0 && s == -1) {
+            return Alert.alert('Sorry bruh please select a different song', 'Video cannot be downloaded, might be a proxy error')
+        }
+        console.log(`video: ${r} out of ${s}`)
     }).then(() => {
         console.log(`${url} has been downloaded!`)
         TrackPlayer.destroy()
@@ -345,16 +358,16 @@ export async function download(url) {
         return console.error(`There was an error downloading ${url}`)
     })
 
-    RNFetchBlob.config({
+    /*RNFetchBlob.config({
         path: `${documentPath}/track.png`,
         overwrite: true
     }).fetch('GET', thumbnailUrl).progress((r, s) => {
-        console.log(`${r} out of ${s}`)
+        console.log(`thumbnail: ${r} out of ${s}`)
     }).then(() => {
         console.log(`the thumbnail has been downloaded!`)
     }).catch(() => {
         return console.error(`There was an error downloading ${thumbnailUrl}`)
-    })
+    })*/
 }
 
 /**
