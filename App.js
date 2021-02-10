@@ -22,12 +22,20 @@ import {
 import RNFetchBlob from 'rn-fetch-blob';
 
 import TrackPlayer from 'react-native-track-player'
+import {useTrackPlayerProgress} from 'react-native-track-player/lib/hooks';
 
 import { documentPath, download } from './src/cuntplayer'
+import Slider from '@react-native-community/slider';
 
 export default function App() {
 
-  const [ input, setInput ] = useState('')
+  const [ input, setInput ] = useState(''
+  )
+  const progress = useTrackPlayerProgress()
+  const { duration, position } = progress
+
+  const [isSeeking, setSeeking] = useState(false)
+  const [seek, setSeek] = useState(0)
 
   return (
     <>
@@ -41,6 +49,23 @@ export default function App() {
       />
       <Button title = 'pause' onPress = { () => { TrackPlayer.pause() } }/>
       <Button title = 'play' onPress = { () => { TrackPlayer.play() } }/>
+      <Button title = 'kill' onPress = { () => { TrackPlayer.destroy() } }/>
+      <Slider
+        step = {0.015}
+        style = {styles.slider}
+        minimumValue = {0}
+        maximumValue = {duration}
+        value = {isSeeking ? seek : position}
+        onValueChange = { (v) => {
+          TrackPlayer.pause()
+          setSeeking(true)
+          setSeek(v)
+        } }
+        onSlidingComplete = { (v) => {
+          TrackPlayer.seekTo(v)
+          TrackPlayer.play()
+        } }
+      />
       </SafeAreaView>
     </>
   );
@@ -51,8 +76,12 @@ function downloadNewTrack(newTrack) {
     PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
   )
 
-  //download('https://www.youtube.com/watch?v=uQNyTo4k_TA') example for a link
+  //download('https://www.youtube.com/watch?v=uQNyTo4k_TA')
   download(newTrack)
+
+  RNFetchBlob.fs.ls(`${documentPath}/`).then( (file) => {
+    console.log(file)
+  } ).catch( () => { return console.error(`${documentPath}/ doesn't contain any files...`) } )
 }
 
 const styles = StyleSheet.create({
@@ -63,17 +92,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     margin: 25
   },
-  details: {
-    margin: 25
-  },
   input: {
     height: 40,
     width: 250,
     margin: 12,
     borderWidth: 1,
   },
-  image: {
-    width: 350,
-    height: 200
+  slider: {
+    width: 300,
+    opacity: 1,
+    height: 50,
+    marginTop: 50,
   }
 })
