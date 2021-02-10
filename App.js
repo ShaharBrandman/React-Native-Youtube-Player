@@ -8,94 +8,72 @@ import React, { useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
-  ScrollView,
-  View,
   Text,
   StatusBar,
   Button,
-  Image,
+  PermissionsAndroid,
+  TextInput,
 } from 'react-native';
 
 import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
+  Colors
 } from 'react-native/Libraries/NewAppScreen';
 
+import RNFetchBlob from 'rn-fetch-blob';
+
 import TrackPlayer from 'react-native-track-player'
-//import { create, isPLaying, play, pause, setSong } from './src/cuntplayer'
+
+import { documentPath, download } from './src/cuntplayer'
 
 export default function App() {
 
-  const track = {
-    id: 'epic',
-    url: 'https://drive.google.com/uc?export=download&id=1AjPwylDJgR8DOnmJWeRgZzjsohi-7ekj',
-    title: 'idk man',
-    artist: 'nigger',
-    image: 'https://i.picsum.photos/id/100/200/200.jpg'
-  }
+  const [ input, setInput ] = useState('')
 
-  TrackPlayer.setupPlayer()
-  TrackPlayer.add(track)
-
-  const [ title, setTitle ] = useState('default track')
-  const [ artist, setArtist ] = useState('default artist')
-  
   return (
     <>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle = "dark-content" />
       <SafeAreaView style = {styles.body} >
-      <Button title = 'pause' onPress = { () => { TrackPlayer.stop() } }/>
-      <Button title = 'play' onPress = { () => { TrackPlayer.play() } }/>
-      <Text> {title} </Text>
-      <Text> {artist} </Text>
-      <Image
-        source = {{uri: './assests/thumbnail.png'}}
-        width = '50'
-        height = '50'
+      <Text> Enter a youtube link to play </Text>
+      <TextInput 
+        style = {styles.input} 
+        onSubmitEditing = { () => { downloadNewTrack(input) } } 
+        onChangeText = {(text) => { setInput(text) }}
       />
+      <Button title = 'pause' onPress = { () => { TrackPlayer.pause() } }/>
+      <Button title = 'play' onPress = { () => { TrackPlayer.play() } }/>
       </SafeAreaView>
     </>
   );
 };
 
+function downloadNewTrack(newTrack) {
+  PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+  )
+
+  //download('https://www.youtube.com/watch?v=uQNyTo4k_TA') example for a link
+  download(newTrack)
+}
+
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
   body: {
     backgroundColor: Colors.white,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 25
   },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  details: {
+    margin: 25
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
+  input: {
+    height: 40,
+    width: 250,
+    margin: 12,
+    borderWidth: 1,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
-});
+  image: {
+    width: 350,
+    height: 200
+  }
+})
