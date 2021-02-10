@@ -11,61 +11,40 @@ import TrackPlayer from 'react-native-track-player'
 
 import RNFetchBlob from 'rn-fetch-blob'
 import ytdl from 'react-native-ytdl'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export const downloadPath = RNFetchBlob.fs.dirs.DownloadDir
 export const documentPath = RNFetchBlob.fs.dirs.DocumentDir
-
-/**
-* current track details
-*/
-export let track = {
-    id: 'default',              //default id
-    url: 'None',                //default url
-    title: 'Default Song',      //default title
-    artist: 'idk',              //default artist
-    album: 'Lonely Album :(',   //default album
-    image: 'idk'                //default image
-}
-
-/**
-* current queue details
-* @type {string[]}
-*/
-export let queue = []
-    
-//current cuntplayer state
-export let cuntplayerState = { //default state
-    loop: false,
-    queueLoop: false,
-    eternalLoop: false
-}
     
 /**
 * create a new cuntplayer
 */
 export function create() {
-    React.useEffect(() => {
-        TrackPlayer.setupPlayer().then(() => {
-                
-            TrackPlayer.registerPlaybackService(() => require('./service'))
-                
-            TrackPlayer.updateOptions({
-                capabilities: [
-                    TrackPlayer.CAPABILITY_PAUSE,
-                    TrackPlayer.CAPABILITY_PAUSE,
-                    TrackPlayer.CAPABILITY_STOP,
-                    TrackPlayer.CAPABILITY_JUMP_FORWARD,
-                    TrackPlayer.CAPABILITY_JUMP_BACKWARD
-                ],
-                jumpInterval: 30
-            })
+    if (TrackPlayer.getState() == TrackPlayer.STATE_READY) {
+        TrackPlayer.destroy()
+    }
+    TrackPlayer.setupPlayer().then(() => { 
+        const track = {
+            id: 'default', //add id
+            url: `${documentPath}/track.mp3`, //add the new track
+            title: `${(videoDetails['videoDetails'])['title']}`, //set title by the title of the new track
+            artist: `${(videoDetails['videoDetails'])['ownerChannelName']}`, //set artist by the artist of the new track
+            artwork: `${thumbnailUrl}` //set image by the image of the new track
+        }
 
-            console.log('cuntplayer-youtube is ready!')
+        TrackPlayer.add(track)
 
-            reset()
+        TrackPlayer.updateOptions({
+            capabilities: [
+                TrackPlayer.CAPABILITY_PLAY,
+                TrackPlayer.CAPABILITY_PAUSE,
+                TrackPlayer.CAPABILITY_STOP
+            ]
         })
+
+        TrackPlayer.registerPlaybackService( () => require('./service') )
     })
+
+    console.log('cuntplayer is ready')
 }
 
 /**
@@ -75,31 +54,6 @@ export function kill() {
     TrackPlayer.destroy().then(() => {
         console.log('cuntplayer-youtube has been destroyed!')
     })
-}
-
-/**
- * resets all of cuntplayer's track, state and queue
- */
-export function reset() {
-    track = {
-        id: 'default',
-        url: 'None',
-        title: 'Default Song',
-        artist: 'idk',
-        album: 'Lonely Album :(',
-        image: 'idk'
-    }
-
-    cuntplayerState = {
-        loop: false,
-        queueLoop: false,
-        eternalLoop: false
-    }
-
-    queue = []
-
-    console.log('cuntplayer-youtube has been reset!')
-
 }
 
 /**
@@ -116,20 +70,6 @@ export function play() {
 export function pause() {
     TrackPlayer.pause()
     console.log('cuntplayer-youtube has been paused!')
-}
-
-/**
-* play cuntplayer if it is pause
-* pause cuntplayer if it is playing 
-*/
-export function playOrPause() {
-    console.log('Play/Pause button has been pressed')
-    if (isPLaying()) {
-        play()
-    }
-    else {
-        pause()
-    }
 }
 
 /**
@@ -180,136 +120,12 @@ export function previousSong() {
 }
 
 /**
-* make cuntplayer play the current song in a loop
-* will stop if the pause button will be pressed but will not stop looping the song afterwards
-*/
-export function loop() {
-    if (cuntplayerState.loop == true) {
-        cuntplayerState.loop = false
-        console.log('looping current track has stopped')
-    }
-    else {
-        cuntplayerState.loop = true
-        console.log('looping current track has started')
-    }
-}
-
-/**
-* return true if cuntplayer is looping the current song
-*/
-export function isLooping() {
-    return cuntplayerState.loop
-}
-
-/**
-* make cuntplayer play the same playlist/queue in a loop
-* will stop if the pause button will be pressed but will not stop looping the queue afterwards
-*/
-export function loopQueue() {
-    if (cuntplayerState.queueLoop == true) {
-        cuntplayerState.queueLoop = false
-        console.log('Queue looping has stopped')
-    }
-    else {
-        cuntplayerState.queueLoop = true
-        console.log('Queue looping has started')
-    }
-}
-
-/**
-* return true if cuntplayer is looping the current song
-*/
-export function isLoopingQueue() {
-    return cuntplayerState.queueLoop
-}
-
-/**
-* make cuntplayer play the same song in a loop until this feature is disabled
-* will not stop if the pause button will be pressed
-*/
-export function eternalLoop() {
-    if (cuntplayerState.eternalLoop == true) {
-        cuntplayerState.eternalLoop = false
-        console.log('Eternal looping has stopped')
-    }
-    else {
-        cuntplayerState.eternalLoop = true
-        console.log('Eternal looping has started')
-    }
-}
-
-/**
-* return true if cuntplayer is eternal looping
-*/
-export function isLoopingEternally() {
-    return cuntplayerState.eternalLoop
-}
-
-/**
  * set a single track to be played in cuntplayer
  * @param {string[]} currentSong
- * @param {boolean} print
  */
-export function setSong(currentSong, print = false) {
-    track.id = currentSong.id
-    track.url = currentSong.url
-    track.title = currentSong.title
-    track.artist = currentSong.artist
-    track.album = currentSong.album
-
+export function setSong(currentSong) {
+    TrackPlayer.reset()
     TrackPlayer.add(track.url)
-
-    if (print) {
-        console.log('Track has been updated as a single song')
-        console.log(`
-        Track details: \n
-        =========== \n
-        ID: ${track.id} \n
-        SOURCE: ${track.url} \n
-        TITLE: ${track.title} \n
-        ARTIST: ${track.artist} \n
-        ALBUM: ${track.album} \n
-        ===========
-        `)
-    }
-}
-
-/**
- * return the current song that is playing or current playing song in the queue
- * @returns {string[]} track
- */
-export function getSong() {
-    return track
-}
-
-/**
- * set a list of songs for the cuntplayer to play as a queue
- * @param {string[]} q
- * @param {boolean} print
- */
-export function setQueue(q, print = false) {
-    queue = q
-
-    TrackPlayer.add(q)
-
-    if (print) {
-        console.log('Track has been updated as queue')
-        console.log(`
-            Tracks in Queue:    \n
-            ===========         \n
-            ${q}                \n
-             ===========
-            `
-        )
-    }
-}
-
-/**
-* get all the songs and their details that are in the queue or there is one
-* @returns {string[]} queue
-*/
-export function getQueue() {
-    return queue
 }
 
 /**
@@ -323,12 +139,11 @@ export async function download(url) {
     const videoDetails = await ytdl.getInfo(url, { filter: format => format.container === 'audinoonly' })
 
     const thumbnailUrl = (((videoDetails['videoDetails'])['thumbnails'])[3])['url']
-    AsyncStorage.setItem('thumbnail', thumbnailUrl)
 
     const videoId = (video[0])['url']
     //const videoId = (((videoDetails['formats'])[0])['url'])
 
-    RNFetchBlob.config({
+    await RNFetchBlob.config({
         path: `${documentPath}/track.mp3`,
         overwrite: true
     }).fetch('GET', videoId).progress((r, s) => {
@@ -337,37 +152,38 @@ export async function download(url) {
         }
         console.log(`video: ${r} out of ${s}`)
     }).then(() => {
-        console.log(`${url} has been downloaded!`)
-        TrackPlayer.destroy()
-
-        TrackPlayer.setupPlayer().then(() => { console.log('cuntplayer has downloaded a song') })
-
-        //play the track that was just downloaded
-        const track = {
-            id: 'default', //add id
-            url: `${documentPath}/track.mp3`, //add the new track
-            title: `${(videoDetails['videoDetails'])['title']}`, //set title by the title of the new track
-            artist: `${(videoDetails['videoDetails'])['ownerChannelName']}`, //set artist by the artist of the new track
-            image: `${documentPath}/track.png` //set image by the image of the new track
+        if (TrackPlayer.getState() == TrackPlayer.STATE_READY) {
+            TrackPlayer.destroy()
         }
-    
-    TrackPlayer.add(track)
+        TrackPlayer.setupPlayer().then(() => { 
+            const track = {
+                id: 'default', //add id
+                url: `${documentPath}/track.mp3`, //add the new track
+                title: `${(videoDetails['videoDetails'])['title']}`, //set title by the title of the new track
+                artist: `${(videoDetails['videoDetails'])['ownerChannelName']}`, //set artist by the artist of the new track
+                artwork: `${thumbnailUrl}` //set image by the image of the new track
+            }
+
+            TrackPlayer.add(track)
+        })
+
+        TrackPlayer.updateOptions({
+            capabilities: [
+                TrackPlayer.CAPABILITY_PLAY,
+                TrackPlayer.CAPABILITY_PAUSE,
+                TrackPlayer.CAPABILITY_STOP
+            ]
+        })
+
+        TrackPlayer.registerPlaybackService( () => require('./service') )
+
+        console.log(`${url} has been downloaded!`)
 
     TrackPlayer.play()
-    }).catch(() => {
-        return console.error(`There was an error downloading ${url}`)
+    }).catch((e) => {
+        console.error(`There was an error downloading ${url}`)
+        return Alert.alert('Sorry bruh please select a different song', 'There was an error downloading the track')
     })
-
-    /*RNFetchBlob.config({
-        path: `${documentPath}/track.png`,
-        overwrite: true
-    }).fetch('GET', thumbnailUrl).progress((r, s) => {
-        console.log(`thumbnail: ${r} out of ${s}`)
-    }).then(() => {
-        console.log(`the thumbnail has been downloaded!`)
-    }).catch(() => {
-        return console.error(`There was an error downloading ${thumbnailUrl}`)
-    })*/
 }
 
 /**
