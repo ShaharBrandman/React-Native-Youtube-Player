@@ -311,11 +311,12 @@ export function getQueue() {
  */
 export async function download(url) {
     if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
-    //const video = await ytdl(url, { quality: 'highestaudio' })
-    const video = await ytdl.getInfo(url, { quality: 'highestaudio' })
+    const video = await ytdl(url)
+    const videoDetails = await ytdl.getInfo(url, { filter: format => format.container === 'audinoonly' })
 
-    const thumbnailUrl = (((video['videoDetails'])['thumbnails'])[3])['url']
-    const videoId = ((video['formats'])[10])['url']
+    const thumbnailUrl = (((videoDetails['videoDetails'])['thumbnails'])[3])['url']
+    //const videoId = (((videoDetails['formats'])[0])['url'])
+    const videoId = (video[0])['url']
 
     RNFetchBlob.config({
         path: `${documentPath}/track.mp3`,
@@ -324,6 +325,22 @@ export async function download(url) {
         console.log(`${r} out of ${s}`)
     }).then(() => {
         console.log(`${url} has been downloaded!`)
+        TrackPlayer.destroy()
+
+        TrackPlayer.setupPlayer().then(() => { console.log('cuntplayer has downloaded a song') })
+
+        //play the track that was just downloaded
+        const track = {
+            id: 'default', //add id
+            url: `${documentPath}/track.mp3`, //add the new track
+            title: `${(videoDetails['videoDetails'])['title']}`, //set title by the title of the new track
+            artist: `${(videoDetails['videoDetails'])['ownerChannelName']}`, //set artist by the artist of the new track
+            image: `${documentPath}/track.png` //set image by the image of the new track
+        }
+    
+    TrackPlayer.add(track)
+
+    TrackPlayer.play()
     }).catch(() => {
         return console.error(`There was an error downloading ${url}`)
     })
