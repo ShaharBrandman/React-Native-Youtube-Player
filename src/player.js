@@ -5,14 +5,11 @@ Author: Shahar Brandman (2021)
 
 The whole source code for the background youtube player
 */
-import React from 'react'
 import { Alert } from 'react-native'
 import TrackPlayer from 'react-native-track-player'
-
-import RNFetchBlob from 'rn-fetch-blob'
 import ytdl from 'react-native-ytdl'
 
-export async function playTrack() {
+export default async function playTrack() {
     //return if the youtube id is not valid
     if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
     
