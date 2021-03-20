@@ -1,112 +1,89 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
-import React from 'react';
-import type {Node} from 'react';
+/*
+cuntplayer-youtube/App.js
+Author: Shahar Brandman (2021)
+*/
+import React, { useState } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
-  View,
+  StatusBar,
+  Button,
+  TextInput,
 } from 'react-native';
 
 import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
+  Colors
 } from 'react-native/Libraries/NewAppScreen';
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+import TrackPlayer from 'react-native-track-player'
+import { useTrackPlayerProgress } from 'react-native-track-player/lib/hooks';
+import Slider from '@react-native-community/slider';
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+import playTrack from './src/player'
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+export default function App() {
+
+  const [input, setInput] = useState('')
+  const progress = useTrackPlayerProgress()
+  const { duration, position } = progress
+
+  const [isSeeking, setSeeking] = useState(false)
+  const [seek, setSeek] = useState(0)
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <>
+      <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={styles.body} >
+        <Text> Enter a youtube link to play </Text>
+        <TextInput
+          style={styles.input}
+          onSubmitEditing={() => { playTrack(input) }}
+          onChangeText={(text) => { setInput(text) }}
+        />
+        <Button title='pause' onPress={() => { TrackPlayer.pause() }} />
+        <Button title='play' onPress={() => { TrackPlayer.play() }} />
+        <Button title='kill' onPress={() => { TrackPlayer.destroy() }} />
+        <Slider
+          step={0.015}
+          style={styles.slider}
+          minimumValue={0}
+          maximumValue={duration}
+          value={isSeeking ? seek : position}
+          onValueChange={(v) => {
+            TrackPlayer.pause()
+            setSeeking(true)
+            setSeek(v)
+          }}
+          onSlidingComplete={(v) => {
+            TrackPlayer.seekTo(v)
+            TrackPlayer.play()
+            setSeeking(false)
+          }}
+        />
+      </SafeAreaView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  body: {
+    backgroundColor: Colors.white,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 25
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  input: {
+    height: 40,
+    width: 250,
+    margin: 12,
+    borderWidth: 1,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-export default App;
+  slider: {
+    width: 300,
+    opacity: 1,
+    height: 50,
+    marginTop: 50,
+  }
+})
