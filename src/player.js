@@ -7,7 +7,7 @@ import { Alert } from 'react-native'
 import TrackPlayer from 'react-native-track-player'
 import ytdl from 'react-native-ytdl'
 
-export default async function playTrack() {
+export default async function playTrack(url) {
     //return if the youtube id is not valid
     if (!ytdl.validateURL(url)) { return Alert.alert('Youtube URL error:', 'URL is not valid') }
 
@@ -41,5 +41,19 @@ export default async function playTrack() {
 
         //await purpose: don't continue without adding the Track to the queue
         await TrackPlayer.add(track)
+
+        await TrackPlayer.updateOptions({
+            stopWithApp: true,
+            playIcon: true,
+            capabilities: [
+                TrackPlayer.CAPABILITY_PLAY,
+                TrackPlayer.CAPABILITY_PAUSE,
+                TrackPlayer.CAPABILITY_STOP,
+            ],
+            compactCapabilities: [
+                TrackPlayer.CAPABILITY_PLAY,
+                TrackPlayer.CAPABILITY_PAUSE,
+            ]
+        })
     })
 }
